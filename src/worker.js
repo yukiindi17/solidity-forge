@@ -1,6 +1,6 @@
 const MAX_FILES = 80;
-const MAX_FILE_BYTES = 512 * 1024;
-const MAX_TOTAL_BYTES = 1 * 1024 * 1024;
+const MAX_FILE_BYTES = 128 * 1024;
+const MAX_TOTAL_BYTES = 256 * 1024;
 const JOB_TTL = 3600;
 const OUTPUT_LIMIT = 30000;
 
