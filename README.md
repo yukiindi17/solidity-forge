@@ -1,23 +1,83 @@
-# Solidity Forge 0.2.0
+# Solidity Forge 0.3.0
 
-Cloud MCP backend for Solidity Foundry testing and TypeScript smart-contract testing. Each test request runs inside a disposable Render Sandbox Linux microVM.
+Solidity Forge is a stateless MCP service for compiling and testing Solidity and TypeScript smart-contract projects. The free-tier architecture uses a Cloudflare Worker as the lightweight MCP/API gateway and GitHub Actions as the disposable test runner.
 
-## MCP tools
+## Test engines
 
-- `run_solidity_tests`: Foundry unit, fuzz, and invariant tests on Foundry's local EVM/REVM.
-- `run_typescript_tests`: TypeScript smart-contract tests using npm scripts, Hardhat, Mocha, Vitest, or Jest. Hardhat projects can deploy and interact with contracts on their in-process local EVM.
+- Solidity: Foundry `forge test` (unit, fuzz, and invariant tests) using Foundry's local EVM/REVM.
+- TypeScript: Hardhat tests on Hardhat's local in-process EVM; also supports npm test, Mocha, Vitest, and Jest.
+- Each request is dispatched to a fresh GitHub-hosted Ubuntu VM. The project is executed inside a resource-limited Docker container with no host mounts except its temporary workspace. No API keys or GitHub tokens are passed into the container.
 
-## Required service environment
+## Architecture
 
-- `SOLIDITY_FORGE_TOKEN`: bearer token for MCP endpoint.
-- `RENDER_API_KEY`: Render API key used only by the MCP host to create/terminate sandboxes.
-- `RENDER_WORKSPACE_ID`: Render workspace ID.
-- Optional `RENDER_SANDBOX_GROUP_ID` and `RENDER_SANDBOX_BUILD_ID` pin a prebuilt sandbox image.
+```text
+ChatGPT / MCP client
+       |
+       v
+Cloudflare Worker (/mcp)
+       |  stores source privately in Worker KV
+       |  dispatches opaque job ID only
+       v
+GitHub Actions (fresh hosted VM per run)
+       |
+       v
+Docker container (resource-limited, unprivileged)
+       |
+       +-- Foundry / REVM
+       +-- Hardhat / local EVM
+       |
+       v
+Cloudflare Worker (private result callback)
+```
 
-## Security
+## One-time setup
 
-Caller-provided Foundry config is ignored and replaced with restrictive settings (`ffi=false`, no filesystem permissions, offline mode). Inputs are capped at 80 files, 512 KiB per file and 4 MiB total. Secrets and .env files are rejected. No API credentials are passed to guest code. Test code is untrusted and runs in disposable microVMs.
+1. Create a Cloudflare KV namespace named `SOLIDITY_FORGE_JOBS`.
+2. Put its namespace ID into `wrangler.toml` in place of `REPLACE_WITH_KV_NAMESPACE_ID`.
+3. Install dependencies and deploy:
+   - `npm install`
+   - `npx wrangler login`
+   - `npx wrangler deploy`
+4. Set Worker secrets:
+   - `npx wrangler secret put SOLIDITY_FORGE_TOKEN` — bearer token used by the MCP client.
+   - `npx wrangler secret put FORGE_CALLBACK_TOKEN` — separate random token shared with the GitHub Actions repository secret.
+   - `npx wrangler secret put GITHUB_TOKEN` — fine-grained GitHub PAT with Actions: write for this repository only.
+   - `npx wrangler secret put GITHUB_OWNER` — GitHub owner.
+   - `npx wrangler secret put GITHUB_REPO` — repository name.
+   - `npx wrangler secret put WORKER_PUBLIC_URL` — deployed Worker base URL, e.g. `https://solidity-forge.<account>.workers.dev`.
+5. In GitHub repository Settings → Secrets and variables → Actions:
+   - Add secret `FORGE_CALLBACK_TOKEN` with the same value used in the Worker.
+   - Add variable `FORGE_WORKER_URL` with the deployed Worker base URL.
+   - Enable GitHub Actions for the repository.
+6. The workflow file `.github/workflows/forge-runner.yml` must exist on the default branch. The GitHub repository must be public to use standard hosted runners without Actions compute charges.
 
-## Limitations
+## MCP endpoint
 
-Include required dependencies such as forge-std in submitted Solidity files. TypeScript projects should include package.json, test configuration, contracts and tests; include package-lock.json for deterministic npm ci installs. This source is not production verified until deployed and integration-tested.
+- URL: `https://<worker-host>/mcp`
+- Authentication: `Authorization: Bearer <SOLIDITY_FORGE_TOKEN>`
+- Health: `GET /health`
+
+Tools:
+- `run_solidity_tests` — queues a Foundry job and returns a `job_id`.
+- `run_typescript_tests` — queues a TypeScript job and returns a `job_id`.
+- `get_test_result` — polls the job result by `job_id`.
+
+Jobs and results expire from KV after one hour. The MCP caller should poll every few seconds until status is `completed`.
+
+## Input limits and security
+
+- Up to 80 files, 512 KiB per file, 4 MiB total.
+- Environment files, common private-key file extensions, `.git`, `.github`, and `node_modules` paths are rejected.
+- Only fixed test commands are accepted; no arbitrary shell command is exposed.
+- The workflow dispatch contains only an opaque random job ID. Project source and test results are held in the Worker KV namespace, not embedded in public workflow inputs.
+- The container has CPU, memory, process, filesystem, and privilege restrictions. It receives no GitHub token or Worker callback secret.
+- Dependencies and compiler downloads require outbound network access from the isolated container. Do not submit private keys, API credentials, wallet seed phrases, or other secrets in project files or source code.
+- A Docker container is defense-in-depth, not a substitute for a dedicated hardened multi-tenant sandbox. Treat submitted code as untrusted and keep the GitHub repository dedicated to this runner.
+
+## Free-tier notes
+
+GitHub standard hosted runners are free for public repositories. Cloudflare Workers and KV have free-tier limits; usage beyond those limits can require a paid plan. This setup is designed for low-volume personal testing, not guaranteed unlimited production traffic.
+
+## Current verification status
+
+The migration source and workflow are committed to the repository, but deployment and end-to-end execution still require the one-time Cloudflare and GitHub secrets/KV setup. Do not treat the service as live until a real Foundry and Hardhat job completes successfully.
