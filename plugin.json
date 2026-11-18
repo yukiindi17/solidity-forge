@@ -1,19 +1,19 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "solidity-forge",
-  "version": "0.2.0",
-  "description": "Cloud Solidity and TypeScript smart-contract testing using disposable EVM execution environments.",
+  "version": "0.3.0",
+  "description": "Free-tier Solidity Foundry and TypeScript Hardhat testing with disposable GitHub-hosted runners and isolated local EVMs.",
   "author": { "name": "Solidity Forge" },
   "extensions": {
     "com.openai": {
       "interface": {
         "displayName": "Solidity Forge",
-        "shortDescription": "Cloud smart-contract testing",
-        "longDescription": "Run Foundry Solidity tests and TypeScript smart-contract tests in disposable cloud sandboxes.",
+        "shortDescription": "Foundry and Hardhat isolated testing",
+        "longDescription": "Compile and test Solidity with Foundry and TypeScript smart contracts with Hardhat in disposable GitHub-hosted runners.",
         "developerName": "Solidity Forge",
         "category": "Developer Tools",
         "capabilities": ["CodeExecution"],
-        "defaultPrompt": "Run my Solidity or TypeScript smart-contract tests in an isolated cloud EVM environment."
+        "defaultPrompt": "Run my Solidity Foundry or TypeScript Hardhat tests in a fresh isolated runner and report the compilation and test results."
       }
     }
   }
