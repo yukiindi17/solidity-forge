@@ -66,7 +66,7 @@ Jobs and results expire from KV after one hour. The MCP caller should poll every
 
 ## Input limits and security
 
-- Up to 80 files, 512 KiB per file, 4 MiB total.
+- Up to 80 files, 512 KiB per file, 1 MiB total.
 - Environment files, common private-key file extensions, `.git`, `.github`, and `node_modules` paths are rejected.
 - Only fixed test commands are accepted; no arbitrary shell command is exposed.
 - The workflow dispatch contains only an opaque random job ID. Project source and test results are held in the Worker KV namespace, not embedded in public workflow inputs.
