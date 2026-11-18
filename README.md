@@ -44,7 +44,6 @@ Cloudflare Worker (private result callback)
    - `npx wrangler secret put GITHUB_TOKEN` — fine-grained GitHub PAT with Actions: write for this repository only.
    - `npx wrangler secret put GITHUB_OWNER` — GitHub owner.
    - `npx wrangler secret put GITHUB_REPO` — repository name.
-   - `npx wrangler secret put WORKER_PUBLIC_URL` — deployed Worker base URL, e.g. `https://solidity-forge.<account>.workers.dev`.
 5. In GitHub repository Settings → Secrets and variables → Actions:
    - Add secret `FORGE_CALLBACK_TOKEN` with the same value used in the Worker.
    - Add variable `FORGE_WORKER_URL` with the deployed Worker base URL.
@@ -62,7 +61,7 @@ Tools:
 - `run_typescript_tests` — queues a TypeScript job and returns a `job_id`.
 - `get_test_result` — polls the job result by `job_id`.
 
-Jobs and results expire from KV after one hour. The MCP caller should poll every few seconds until status is `completed`.
+Jobs and results expire from KV after one hour. The workflow retries initial KV reads to account for cross-region KV propagation. The MCP caller should poll every few seconds until status is `completed`.
 
 ## Input limits and security
 
