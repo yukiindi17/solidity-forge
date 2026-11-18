@@ -65,7 +65,7 @@ Jobs and results expire from KV after one hour. The workflow retries initial KV 
 
 ## Input limits and security
 
-- Up to 80 files, 512 KiB per file, 1 MiB total.
+- Up to 80 files, 128 KiB per file, 256 KiB total. The small payload cap is intentional to keep Worker request parsing within the Free plan CPU budget; omit a large package-lock.json and let the isolated runner install from package.json.
 - Environment files, common private-key file extensions, `.git`, `.github`, and `node_modules` paths are rejected.
 - Only fixed test commands are accepted; no arbitrary shell command is exposed.
 - The workflow dispatch contains only an opaque random job ID. Project source and test results are held in the Worker KV namespace, not embedded in public workflow inputs.
@@ -75,7 +75,7 @@ Jobs and results expire from KV after one hour. The workflow retries initial KV 
 
 ## Free-tier notes
 
-GitHub standard hosted runners are free for public repositories. Cloudflare Workers and KV have free-tier limits; usage beyond those limits can require a paid plan. This setup is designed for low-volume personal testing, not guaranteed unlimited production traffic.
+GitHub standard hosted runners are free for public repositories. Cloudflare Workers Free currently allows 100,000 requests/day and 10 ms CPU per request; KV Free allows 100,000 reads/day and 1,000 writes plus 1,000 deletes/day. The 256 KiB input cap helps keep the gateway within its CPU allowance. This setup is designed for low-volume personal testing, not guaranteed unlimited production traffic.
 
 ## Current verification status
 
