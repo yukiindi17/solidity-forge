@@ -1,6 +1,6 @@
 const MAX_FILES = 80;
 const MAX_FILE_BYTES = 512 * 1024;
-const MAX_TOTAL_BYTES = 4 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 1 * 1024 * 1024;
 const JOB_TTL = 3600;
 const OUTPUT_LIMIT = 30000;
 
@@ -50,8 +50,8 @@ function schema(kind) {
 async function dispatch(env, job) {
   const owner = env.GITHUB_OWNER;
   const repo = env.GITHUB_REPO;
-  if (!env.GITHUB_TOKEN || !owner || !repo || !env.FORGE_CALLBACK_TOKEN || !env.WORKER_PUBLIC_URL) {
-    throw new Error("Worker belum dikonfigurasi. Periksa GITHUB_OWNER, GITHUB_REPO, GITHUB_TOKEN, FORGE_CALLBACK_TOKEN, dan WORKER_PUBLIC_URL.");
+  if (!env.GITHUB_TOKEN || !owner || !repo || !env.FORGE_CALLBACK_TOKEN) {
+    throw new Error("Worker belum dikonfigurasi. Periksa GITHUB_OWNER, GITHUB_REPO, GITHUB_TOKEN, dan FORGE_CALLBACK_TOKEN.");
   }
   await env.JOBS.put(`job:${job.id}`, JSON.stringify(job), { expirationTtl: JOB_TTL });
   const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/forge-runner.yml/dispatches`, {
