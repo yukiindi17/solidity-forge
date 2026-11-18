@@ -74,7 +74,7 @@ jobs:
               if o.get("match"): cmd += " --match-test " + shlex.quote(o["match"])
           else:
               install = o.get("install", "auto")
-              install_cmd = "npm ci --no-audit --no-fund" if install in ("auto", "npm ci") and __import__("os").path.exists("workspace/package-lock.json") else "npm install --no-audit --no-fund"
+              has_lock = __import__("os").path.exists("workspace/package-lock.json")\n              if install == "npm ci": install_cmd = "npm ci --no-audit --no-fund"\n              elif install == "npm install": install_cmd = "npm install --no-audit --no-fund"\n              else: install_cmd = "npm ci --no-audit --no-fund" if has_lock else "npm install --no-audit --no-fund"
               test = o.get("test_command", "auto")
               if test == "auto":
                   pkg = json.load(open("workspace/package.json"))
@@ -109,7 +109,7 @@ jobs:
           set -euo pipefail
           python3 - "$RUNNER_TEMP/forge-output.txt" "$RUNNER_TEMP/forge-exit-code" "$RUNNER_TEMP/forge-result.json" <<'PY'
           import json, pathlib, sys
-          output = pathlib.Path(sys.argv[1]).read_text(errors="replace")[-30000:]
+          output_path = pathlib.Path(sys.argv[1])\n          output = (output_path.read_text(errors="replace") if output_path.exists() else "Runner failed before test execution.")[-30000:]
           try: code = int(pathlib.Path(sys.argv[2]).read_text().strip())
           except Exception: code = 1
           pathlib.Path(sys.argv[3]).write_text(json.dumps({
