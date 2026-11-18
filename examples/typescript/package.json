@@ -1,0 +1,11 @@
+{
+  "name": "solidity-forge-hardhat-example",
+  "private": true,
+  "scripts": { "test": "hardhat test" },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.0",
+    "typescript": "^5.5.0",
+    "ts-node": "^10.9.2"
+  }
+}
