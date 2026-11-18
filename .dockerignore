@@ -1,0 +1,8 @@
+.git
+.github
+workspace
+node_modules
+.wrangler
+.dev.vars
+.env
+.env.*
