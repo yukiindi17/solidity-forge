@@ -50,11 +50,16 @@ jobs:
           job = json.load(open(sys.argv[1], encoding="utf-8"))
           root = pathlib.Path("workspace").resolve()
           for name, body in job["files"].items():
+              if name == "foundry.toml":
+                  continue
               target = (root / name).resolve()
               if root not in target.parents:
                   raise SystemExit("Unsafe project path")
               target.parent.mkdir(parents=True, exist_ok=True)
               target.write_text(body, encoding="utf-8")
+          (root / "foundry.toml").write_text(
+              '[profile.default]\nsrc = "src"\ntest = "test"\nlibs = ["lib"]\nffi = false\nfs_permissions = []\n',
+              encoding="utf-8")
           with open("runner-meta.json", "w", encoding="utf-8") as f:
               json.dump({"kind": job["kind"], "options": job["options"]}, f)
           PY
