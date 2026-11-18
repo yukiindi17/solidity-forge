@@ -3,7 +3,7 @@
   "mcpServers": {
     "solidity-forge": {
       "type": "streamable-http",
-      "url": "https://REPLACE-WITH-DEPLOYED-SERVICE/mcp",
+      "url": "https://REPLACE-WITH-CLOUDFLARE-WORKER.workers.dev/mcp",
       "extensions": {
         "com.openai": {
           "auth": { "type": "api_key", "headerScheme": "bearer" }
